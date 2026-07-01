@@ -111,6 +111,48 @@ def update_index(new_entry):
 """
 
 
+def update_opds_catalog(epub_name, today):
+    """Generate OPDS catalog (Atom XML) supaya e-reader boleh detect."""
+    from datetime import datetime
+
+    entries = []
+
+    # Parse existing catalog entries
+    if os.path.exists("catalog.xml"):
+        with open("catalog.xml", "r") as f:
+            content = f.read()
+        entries = re.findall(r'<entry>.*?</entry>', content, re.DOTALL)
+
+    # New entry
+    updated = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+    new_entry = f"""<entry>
+    <title>Daily Digest - {today.strftime('%d %B %Y')}</title>
+    <id>urn:uuid:digest-{today.isoformat()}</id>
+    <updated>{updated}</updated>
+    <author><name>Vibe Coder</name></author>
+    <summary>Kompilasi berita harian: Teknologi, AI, Isu Semasa, Kopi</summary>
+    <link rel="http://opds-spec.org/acquisition" href="{epub_name}" type="application/epub+zip"/>
+  </entry>"""
+
+    entries.insert(0, new_entry)
+    entries_xml = "\n  ".join(entries)
+
+    catalog = f"""<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom"
+      xmlns:opds="http://opds-spec.org/2010/catalog">
+  <id>urn:uuid:morning-digest-catalog</id>
+  <title>Morning Digest</title>
+  <subtitle>Daily news digest dalam format EPUB</subtitle>
+  <updated>{updated}</updated>
+  <author><name>Vibe Coder</name></author>
+  <link rel="self" href="catalog.xml" type="application/atom+xml;profile=opds-catalog;kind=acquisition"/>
+  <link rel="start" href="catalog.xml" type="application/atom+xml;profile=opds-catalog;kind=acquisition"/>
+  {entries_xml}
+</feed>
+"""
+    return catalog
+
+
 if __name__ == "__main__":
     today = date.today()
     items = {}
@@ -142,4 +184,10 @@ if __name__ == "__main__":
     with open("index.html", "w") as f:
         f.write(update_index(new_entry))
 
+    # 4. Update OPDS Catalog
+    print("Updating OPDS catalog...")
+    with open("catalog.xml", "w") as f:
+        f.write(update_opds_catalog(epub_name, today))
+
     print(f"Success! Created {epub_name}")
+    print(f"OPDS feed: catalog.xml")
