@@ -230,17 +230,44 @@ if __name__ == "__main__":
         all_items = []
         for url in urls:
             feed_entries = fetch_rss(url)
-            # Tag setiap entry dengan nama feed untuk reference
+            # Tag setiap entry dengan nama feed dan source URL
             feed_name = url.split('/')[2].replace('www.', '')
             for entry in feed_entries:
                 entry['feed_title'] = feed_name
+                entry['feed_url'] = url
             all_items.extend(feed_entries)
-        # Sort by date
-        all_items.sort(
+
+        # Distribute equally across feeds
+        # Round-robin: ambil dari setiap feed secara bergilir
+        feeds_grouped = {}
+        for item in all_items:
+            src = item['feed_url']
+            if src not in feeds_grouped:
+                feeds_grouped[src] = []
+            feeds_grouped[src].append(item)
+
+        # Sort each feed by date
+        for src in feeds_grouped:
+            feeds_grouped[src].sort(
+                key=lambda x: x.get('published_parsed') or time.gmtime(0),
+                reverse=True
+            )
+
+        # Round-robin pick
+        distributed = []
+        max_per_feed = max(1, ARTICLES_PER_TOPIC // max(len(feeds_grouped), 1))
+        remainder = ARTICLES_PER_TOPIC - (max_per_feed * len(feeds_grouped))
+
+        for i, src in enumerate(feeds_grouped):
+            count = max_per_feed + (1 if i < remainder else 0)
+            distributed.extend(feeds_grouped[src][:count])
+
+        # Final sort by date
+        distributed.sort(
             key=lambda x: x.get('published_parsed') or time.gmtime(0),
             reverse=True
         )
-        items[topic] = all_items
+        items[topic] = distributed
 
     # 2. Generate EPUB with full content
     print("Building EPUB (fetching full articles)...")
