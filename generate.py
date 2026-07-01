@@ -21,7 +21,7 @@ BOOK_AUTHOR = CONFIG.get('author', 'Vibe Coder')
 
 
 def fetch_rss(url):
-    """Fetch RSS feed entries."""
+    """Fetch RSS feed entries from a given URL."""
     try:
         d = feedparser.parse(url, agent="Mozilla/5.0")
         return [e for e in d.entries if e.get('title')]
@@ -30,12 +30,15 @@ def fetch_rss(url):
 
 
 def fetch_article_content(url):
-    """Scrape full article text dari URL menggunakan trafilatura."""
+    """Scrape full article text from a URL using trafilatura.
+
+    Returns HTML content if successful, None otherwise.
+    Validates extracted content to reject navigation/menu junk.
+    """
     try:
         downloaded = trafilatura.fetch_url(url)
         if not downloaded:
             return None
-        # Extract sebagai HTML supaya boleh format dalam epub
         result = trafilatura.extract(
             downloaded,
             output_format='html',
@@ -45,16 +48,14 @@ def fetch_article_content(url):
         )
         if not result:
             return None
-        # Validate — reject jika content nampak macam nav/menu junk
-        # Strip HTML tags untuk check
+        # Validate — reject if content looks like nav/menu junk
         text_only = re.sub(r'<[^>]+>', '', result).strip()
-        # Reject jika terlalu pendek atau banyak newlines (menu items)
         lines = [l.strip() for l in text_only.split('\n') if l.strip()]
         avg_line_length = sum(len(l) for l in lines) / max(len(lines), 1)
-        # Menu/nav biasanya banyak baris pendek
+        # Nav/menu typically has many short lines
         if avg_line_length < 20 and len(lines) > 10:
             return None
-        # Reject jika total content terlalu pendek (< 200 chars)
+        # Reject if total content is too short (< 200 chars)
         if len(text_only) < 200:
             return None
         return result
@@ -63,9 +64,8 @@ def fetch_article_content(url):
 
 
 def get_rss_content(entry):
-    """Fallback: ambil content dari RSS feed itself (summary/content field)."""
+    """Fallback: extract content from the RSS feed entry itself."""
     content = ''
-    # Cuba ambil full content dari feed dulu
     if 'content' in entry and entry['content']:
         content = entry['content'][0].get('value', '')
     elif 'summary_detail' in entry:
@@ -76,11 +76,11 @@ def get_rss_content(entry):
     if not content:
         return ''
 
-    # Bersihkan — buang script/style tags tapi keep HTML structure
+    # Clean up — remove script/style tags but keep HTML structure
     content = re.sub(r'<script[^>]*>.*?</script>', '', content, flags=re.DOTALL)
     content = re.sub(r'<style[^>]*>.*?</style>', '', content, flags=re.DOTALL)
 
-    # Kalau content terlalu pendek, tak guna
+    # Reject if content is too short to be useful
     text_only = re.sub(r'<[^>]+>', '', content).strip()
     if len(text_only) < 50:
         return ''
@@ -89,7 +89,7 @@ def get_rss_content(entry):
 
 
 def build_epub(items_by_topic):
-    """Build EPUB dengan full article content dan proper TOC."""
+    """Build a proper EPUB with full article content, cover page, and TOC."""
     book = epub.EpubBook()
     book.set_identifier(f"digest-{date.today().isoformat()}")
     book.set_title(f"{BOOK_TITLE} - {date.today().strftime('%d/%m/%Y')}")
@@ -120,7 +120,7 @@ def build_epub(items_by_topic):
     <div style="text-align: center; padding-top: 30%;">
         <h1>{BOOK_TITLE}</h1>
         <h2>{date.today().strftime('%d %B %Y')}</h2>
-        <p style="color: #666; margin-top: 2em;">Kompilasi berita harian</p>
+        <p style="color: #666; margin-top: 2em;">Daily news compilation</p>
         <p style="color: #999; font-size: 0.8em;">{' · '.join(FEEDS.keys())}</p>
     </div>
     """
@@ -138,7 +138,8 @@ def build_epub(items_by_topic):
             file_name=f"topic_{chapter_idx:02d}.xhtml",
             lang='en'
         )
-        topic_ch.content = f'<h1>{html.escape(topic)}</h1><p>{len(articles[:ARTICLES_PER_TOPIC])} artikel</p>'
+        article_count = len(articles[:ARTICLES_PER_TOPIC])
+        topic_ch.content = f'<h1>{html.escape(topic)}</h1><p>{article_count} article{"s" if article_count != 1 else ""}</p>'
         topic_ch.add_item(style)
         book.add_item(topic_ch)
         all_chapters.append(topic_ch)
@@ -157,7 +158,7 @@ def build_epub(items_by_topic):
             if not content:
                 content = get_rss_content(art)
             if not content:
-                content = '<p class="no-content">Content tidak tersedia.</p>'
+                content = '<p class="no-content">Content not available.</p>'
 
             art_ch = epub.EpubHtml(
                 title=f"[{topic}] {title}",
@@ -182,21 +183,16 @@ def build_epub(items_by_topic):
         )
         chapter_idx += 1
 
-    # Set TOC
     book.toc = toc
-
-    # Add NCX and Nav
     book.add_item(epub.EpubNcx())
     book.add_item(epub.EpubNav())
-
-    # Spine: cover first, then all chapters
     book.spine = ['nav', cover] + all_chapters
 
     return book
 
 
 def update_index(new_entry):
-    """Update index.html dengan entry baru."""
+    """Update index.html with a new digest entry."""
     entries = []
 
     if os.path.exists("index.html"):
@@ -219,7 +215,6 @@ def update_index(new_entry):
 """
 
 
-
 if __name__ == "__main__":
     today = date.today()
     items = {}
@@ -230,15 +225,14 @@ if __name__ == "__main__":
         all_items = []
         for url in urls:
             feed_entries = fetch_rss(url)
-            # Tag setiap entry dengan nama feed dan source URL
+            # Tag each entry with feed name and source URL
             feed_name = url.split('/')[2].replace('www.', '')
             for entry in feed_entries:
                 entry['feed_title'] = feed_name
                 entry['feed_url'] = url
             all_items.extend(feed_entries)
 
-        # Distribute equally across feeds
-        # Round-robin: ambil dari setiap feed secara bergilir
+        # Distribute articles equally across feeds (round-robin)
         feeds_grouped = {}
         for item in all_items:
             src = item['feed_url']
@@ -246,14 +240,14 @@ if __name__ == "__main__":
                 feeds_grouped[src] = []
             feeds_grouped[src].append(item)
 
-        # Sort each feed by date
+        # Sort each feed by date (newest first)
         for src in feeds_grouped:
             feeds_grouped[src].sort(
                 key=lambda x: x.get('published_parsed') or time.gmtime(0),
                 reverse=True
             )
 
-        # Round-robin pick
+        # Round-robin pick to ensure equal representation
         distributed = []
         max_per_feed = max(1, ARTICLES_PER_TOPIC // max(len(feeds_grouped), 1))
         remainder = ARTICLES_PER_TOPIC - (max_per_feed * len(feeds_grouped))
@@ -276,7 +270,7 @@ if __name__ == "__main__":
     with open(epub_name, 'wb') as f:
         epub.write_epub(f, book)
 
-    # 3. Update Index
+    # 3. Update index page
     print("Updating index...")
     new_entry = f"<li><a href='{epub_name}'>{today.strftime('%d %B %Y')}</a></li>"
     with open("index.html", "w") as f:
@@ -295,7 +289,7 @@ if __name__ == "__main__":
             except ValueError:
                 continue
 
-    # Rebuild index.html and catalog.xml to only include existing files
+    # Rebuild index.html and catalog.xml to reflect existing files only
     existing_epubs = sorted(
         [f for f in os.listdir('.') if f.startswith('Digest_') and f.endswith('.epub')],
         reverse=True
@@ -330,7 +324,7 @@ if __name__ == "__main__":
     <id>urn:uuid:digest-{file_date.isoformat()}</id>
     <updated>{updated}</updated>
     <author><name>{html.escape(BOOK_AUTHOR)}</name></author>
-    <summary>Kompilasi berita harian: {html.escape(', '.join(FEEDS.keys()))}</summary>
+    <summary>Daily news compilation: {html.escape(', '.join(FEEDS.keys()))}</summary>
     <link rel="http://opds-spec.org/acquisition" href="{BASE_URL}/{f}" type="application/epub+zip"/>
   </entry>""")
 
@@ -341,7 +335,7 @@ if __name__ == "__main__":
       xmlns:opds="http://opds-spec.org/2010/catalog">
   <id>urn:uuid:morning-digest-catalog</id>
   <title>{html.escape(BOOK_TITLE)}</title>
-  <subtitle>Daily news digest dalam format EPUB</subtitle>
+  <subtitle>Daily news digest in EPUB format</subtitle>
   <updated>{updated}</updated>
   <author><name>{html.escape(BOOK_AUTHOR)}</name></author>
   <link rel="self" href="{BASE_URL}/catalog.xml" type="application/atom+xml;profile=opds-catalog;kind=acquisition"/>
@@ -350,6 +344,6 @@ if __name__ == "__main__":
 </feed>
 """)
 
-    print(f"Success! Created {epub_name}")
-    print(f"Keeping {len(existing_epubs)} digest(s) (last 7 days)")
+    print(f"Done! Created {epub_name}")
+    print(f"Keeping {len(existing_epubs)} digest(s) (last {KEEP_DAYS} days)")
     print(f"OPDS feed: catalog.xml")

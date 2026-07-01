@@ -232,7 +232,7 @@
                 <button class="btn-connect" onclick="loadConfig()">Connect</button>
             </div>
             <p style="font-size: 0.75rem; color: #64748b; margin-top: 0.5rem;">
-                Token perlu scope <code>repo</code>. <a href="https://github.com/settings/tokens/new?scopes=repo&description=morning-digest-admin" target="_blank" style="color: #3b82f6;">Create token →</a>
+                Token needs <code>repo</code> + <code>workflow</code> scopes. <a href="https://github.com/settings/tokens/new?scopes=repo,workflow&description=morning-digest-admin" target="_blank" style="color: #3b82f6;">Create token →</a>
             </p>
         </div>
 
@@ -257,7 +257,7 @@
                     <input type="number" id="setting-keepdays" min="1" max="30">
                 </div>
                 <div class="setting-item">
-                    <label>Schedule (MYT)</label>
+                    <label>Schedule (UTC+8)</label>
                     <input type="time" id="setting-schedule">
                 </div>
             </div>
@@ -310,7 +310,7 @@
         }
 
         async function loadConfig() {
-            if (!getToken()) { setStatus('Masukkan token dulu', 'error'); return; }
+            if (!getToken()) { setStatus('Enter a token first', 'error'); return; }
             setStatus('Loading config...', 'loading');
             try {
                 const data = await ghAPI(`contents/${CONFIG_PATH}`);
@@ -447,7 +447,7 @@
                     const err = await res.json().catch(() => ({}));
                     throw new Error(err.message || `HTTP ${res.status}`);
                 }
-                setStatus('✅ Workflow triggered! Digest akan siap dalam ~1 minit.', 'success');
+                setStatus('✅ Workflow triggered! Digest will be ready in ~1 minute.', 'success');
             } catch (e) {
                 setStatus('❌ Trigger failed: ' + e.message, 'error');
             }
