@@ -24,7 +24,7 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          pip install feedparser ebooklib
+          pip install feedparser ebooklib trafilatura
 
       - name: Generate Digest
         run: python generate.py

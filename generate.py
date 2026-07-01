@@ -1,11 +1,12 @@
 import feedparser
-from datetime import date
+from datetime import date, datetime
 import os
 import html
 import re
 import ebooklib
 from ebooklib import epub
 import time
+import trafilatura
 
 # === KONFIGURASI ===
 FEEDS = {
@@ -27,8 +28,12 @@ FEEDS = {
     ]
 }
 
+# Berapa artikel per topik
+ARTICLES_PER_TOPIC = 5
+
 
 def fetch_rss(url):
+    """Fetch RSS feed entries."""
     try:
         d = feedparser.parse(url, agent="Mozilla/5.0")
         return [e for e in d.entries if e.get('title')]
@@ -36,19 +41,55 @@ def fetch_rss(url):
         return []
 
 
+def fetch_article_content(url):
+    """Scrape full article text dari URL menggunakan trafilatura."""
+    try:
+        downloaded = trafilatura.fetch_url(url)
+        if not downloaded:
+            return None
+        # Extract sebagai HTML supaya boleh format dalam epub
+        result = trafilatura.extract(
+            downloaded,
+            output_format='html',
+            include_links=False,
+            include_images=False,
+            include_comments=False,
+        )
+        return result
+    except Exception:
+        return None
+
+
+def get_rss_content(entry):
+    """Fallback: ambil content dari RSS feed itself (summary/content field)."""
+    # Cuba ambil full content dari feed dulu
+    if 'content' in entry and entry['content']:
+        return entry['content'][0].get('value', '')
+    if 'summary_detail' in entry:
+        return entry['summary_detail'].get('value', '')
+    if 'summary' in entry:
+        return entry['summary']
+    return ''
+
+
 def build_epub(items_by_topic):
+    """Build EPUB dengan full article content."""
     book = epub.EpubBook()
     book.set_identifier(f"digest-{date.today().isoformat()}")
     book.set_title(f"Daily Digest - {date.today().strftime('%d/%m/%Y')}")
     book.set_language("en")
     book.add_author("Vibe Coder")
 
-    # CSS — add sekali sahaja pada buku
     css_content = """
-    body { font-family: serif; line-height: 1.5; }
-    h1 { text-align: center; border-bottom: 2px solid #333; }
-    h2 { color: #2c3e50; border-bottom: 1px solid #ddd; }
-    p.source { font-style: italic; color: #7f8c8d; font-size: 0.9em; }
+    body { font-family: serif; line-height: 1.6; margin: 1em; }
+    h1 { text-align: center; border-bottom: 2px solid #333; padding-bottom: 0.5em; }
+    h2 { color: #2c3e50; border-bottom: 1px solid #ddd; padding-bottom: 0.3em; margin-top: 1.5em; }
+    .article { margin-bottom: 2em; page-break-after: always; }
+    .article-title { font-size: 1.2em; font-weight: bold; margin-bottom: 0.3em; }
+    .article-source { font-style: italic; color: #7f8c8d; font-size: 0.85em; margin-bottom: 1em; }
+    .article-content { text-align: justify; }
+    .article-content p { margin-bottom: 0.8em; }
+    .no-content { color: #999; font-style: italic; }
     """
     style = epub.EpubItem(
         uid="style",
@@ -68,15 +109,38 @@ def build_epub(items_by_topic):
             file_name=f"{topic.lower().replace(' ', '_').replace('&', 'and')}.xhtml",
             lang='en'
         )
-        ch.content = f'<h1>{topic}</h1><ul>'
 
-        for art in articles[:5]:  # Top 5 only
-            title = html.escape(art.get('title', ''))
+        chapter_html = f'<h1>{html.escape(topic)}</h1>\n'
+
+        for art in articles[:ARTICLES_PER_TOPIC]:
+            title = html.escape(art.get('title', 'Untitled'))
             link = art.get('link', '')
-            ch.content += f'<li><a href="{link}">{title}</a></li>'
+            source = art.get('feed_title', '')
 
-        ch.content += '</ul>'
-        ch.add_item(style)  # Reference stylesheet
+            # Cuba fetch full content dari web
+            print(f"  Fetching: {title[:60]}...")
+            content = fetch_article_content(link)
+
+            # Fallback ke RSS content kalau scrape gagal
+            if not content:
+                content = get_rss_content(art)
+
+            # Kalau masih takde content
+            if not content:
+                content = '<p class="no-content">Content tidak tersedia.</p>'
+
+            chapter_html += f"""
+            <div class="article">
+                <h2 class="article-title">{title}</h2>
+                <p class="article-source">{html.escape(source)}</p>
+                <div class="article-content">
+                    {content}
+                </div>
+            </div>
+            """
+
+        ch.content = chapter_html
+        ch.add_item(style)
         book.add_item(ch)
         chapters.append(ch)
 
@@ -85,18 +149,15 @@ def build_epub(items_by_topic):
 
 
 def update_index(new_entry):
-    """Update index.html dengan entry baru. Parse secara robust."""
+    """Update index.html dengan entry baru."""
     entries = []
 
     if os.path.exists("index.html"):
         with open("index.html", "r") as f:
             content = f.read()
-        # Extract semua <li>...</li> sedia ada
         entries = re.findall(r'<li>.*?</li>', content, re.DOTALL)
 
-    # Prepend entry baru
     entries.insert(0, new_entry)
-
     entries_html = "\n        ".join(entries)
     return f"""<!DOCTYPE html>
 <html>
@@ -113,19 +174,15 @@ def update_index(new_entry):
 
 def update_opds_catalog(epub_name, today):
     """Generate OPDS catalog (Atom XML) supaya e-reader boleh detect."""
-    from datetime import datetime
-
     BASE_URL = "https://asrulmunir.github.io/morning-digest"
 
     entries = []
 
-    # Parse existing catalog entries
     if os.path.exists("catalog.xml"):
         with open("catalog.xml", "r") as f:
             content = f.read()
         entries = re.findall(r'<entry>.*?</entry>', content, re.DOTALL)
 
-    # New entry
     updated = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
     new_entry = f"""<entry>
     <title>Daily Digest - {today.strftime('%d %B %Y')}</title>
@@ -160,30 +217,34 @@ if __name__ == "__main__":
     today = date.today()
     items = {}
 
-    # 1. Fetch Data
+    # 1. Fetch RSS feeds
     print("Fetching feeds...")
     for topic, urls in FEEDS.items():
         all_items = []
         for url in urls:
-            all_items.extend(fetch_rss(url))
-        # Sort by date — fallback ke epoch jika tiada published_parsed
+            feed_entries = fetch_rss(url)
+            # Tag setiap entry dengan nama feed untuk reference
+            feed_name = url.split('/')[2].replace('www.', '')
+            for entry in feed_entries:
+                entry['feed_title'] = feed_name
+            all_items.extend(feed_entries)
+        # Sort by date
         all_items.sort(
             key=lambda x: x.get('published_parsed') or time.gmtime(0),
             reverse=True
         )
         items[topic] = all_items
 
-    # 2. Generate EPUB
-    print("Building EPUB...")
+    # 2. Generate EPUB with full content
+    print("Building EPUB (fetching full articles)...")
     book = build_epub(items)
     epub_name = f"Digest_{today.isoformat()}.epub"
     with open(epub_name, 'wb') as f:
         epub.write_epub(f, book)
 
-    # 3. Update Index for E-Reader
+    # 3. Update Index
     print("Updating index...")
     new_entry = f"<li><a href='{epub_name}'>{today.strftime('%d %B %Y')}</a></li>"
-
     with open("index.html", "w") as f:
         f.write(update_index(new_entry))
 
