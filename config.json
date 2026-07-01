@@ -1,6 +1,6 @@
 {
   "title": "Daily Digest",
-  "author": "Vibe Coder",
+  "author": "Munir",
   "articles_per_topic": 5,
   "keep_days": 7,
   "schedule": "03:00",
@@ -16,7 +16,7 @@
     "Isu Semasa": [
       "https://www.hmetro.com.my/feed/",
       "https://www.nst.com.my/news/nation",
-      "https://www.saharonline.my/feed/"
+      "http://premium.sinarharian.com.my/rssFeed/14"
     ],
     "Kopi": [
       "https://www.perfectdailygrind.com/feed/"
