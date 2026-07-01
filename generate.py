@@ -299,11 +299,11 @@ if __name__ == "__main__":
     for f in existing_epubs:
         file_date = date.fromisoformat(f.replace('Digest_', '').replace('.epub', ''))
         opds_entries.append(f"""<entry>
-    <title>{BOOK_TITLE} - {file_date.strftime('%d %B %Y')}</title>
+    <title>{html.escape(BOOK_TITLE)} - {file_date.strftime('%d %B %Y')}</title>
     <id>urn:uuid:digest-{file_date.isoformat()}</id>
     <updated>{updated}</updated>
-    <author><name>{BOOK_AUTHOR}</name></author>
-    <summary>Kompilasi berita harian: {', '.join(FEEDS.keys())}</summary>
+    <author><name>{html.escape(BOOK_AUTHOR)}</name></author>
+    <summary>Kompilasi berita harian: {html.escape(', '.join(FEEDS.keys()))}</summary>
     <link rel="http://opds-spec.org/acquisition" href="{BASE_URL}/{f}" type="application/epub+zip"/>
   </entry>""")
 
@@ -313,10 +313,10 @@ if __name__ == "__main__":
       xmlns:dc="http://purl.org/dc/terms/"
       xmlns:opds="http://opds-spec.org/2010/catalog">
   <id>urn:uuid:morning-digest-catalog</id>
-  <title>{BOOK_TITLE}</title>
+  <title>{html.escape(BOOK_TITLE)}</title>
   <subtitle>Daily news digest dalam format EPUB</subtitle>
   <updated>{updated}</updated>
-  <author><name>{BOOK_AUTHOR}</name></author>
+  <author><name>{html.escape(BOOK_AUTHOR)}</name></author>
   <link rel="self" href="{BASE_URL}/catalog.xml" type="application/atom+xml;profile=opds-catalog;kind=acquisition"/>
   <link rel="start" href="{BASE_URL}/catalog.xml" type="application/atom+xml;profile=opds-catalog;kind=acquisition"/>
   {chr(10).join(opds_entries)}
