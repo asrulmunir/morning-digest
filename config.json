@@ -1,0 +1,25 @@
+{
+  "title": "Daily Digest",
+  "author": "Vibe Coder",
+  "articles_per_topic": 5,
+  "keep_days": 7,
+  "schedule": "03:00",
+  "feeds": {
+    "Teknologi": [
+      "https://www.theverge.com/rss/index.xml",
+      "https://bgr.com/feed/",
+      "https://www.macrumors.com/macrumors.xml"
+    ],
+    "AI & ML": [
+      "https://www.artificialintelligence-news.com/feed/"
+    ],
+    "Isu Semasa": [
+      "https://www.hmetro.com.my/feed/",
+      "https://www.nst.com.my/news/nation",
+      "https://www.saharonline.my/feed/"
+    ],
+    "Kopi": [
+      "https://www.perfectdailygrind.com/feed/"
+    ]
+  }
+}

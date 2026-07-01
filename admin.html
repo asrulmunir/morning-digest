@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Morning Digest — Settings</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        .container { max-width: 800px; margin: 0 auto; }
+        h1 {
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+            color: #f8fafc;
+        }
+        .subtitle { color: #94a3b8; margin-bottom: 2rem; }
+
+        /* Auth */
+        .auth-section {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid #334155;
+        }
+        .auth-section label { display: block; margin-bottom: 0.5rem; color: #94a3b8; font-size: 0.85rem; }
+        .auth-section input {
+            width: 100%;
+            padding: 0.6rem 1rem;
+            background: #0f172a;
+            border: 1px solid #475569;
+            border-radius: 8px;
+            color: #e2e8f0;
+            font-size: 0.9rem;
+        }
+        .auth-section input:focus { outline: none; border-color: #3b82f6; }
+        .auth-row { display: flex; gap: 1rem; align-items: end; }
+        .auth-row > div { flex: 1; }
+        .btn-connect {
+            padding: 0.6rem 1.2rem;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            white-space: nowrap;
+        }
+        .btn-connect:hover { background: #2563eb; }
+
+        /* Cards */
+        .card {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid #334155;
+        }
+        .card h2 { font-size: 1.1rem; margin-bottom: 1rem; color: #f8fafc; }
+
+        /* Settings grid */
+        .settings-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        .setting-item label { display: block; font-size: 0.8rem; color: #94a3b8; margin-bottom: 0.3rem; }
+        .setting-item input, .setting-item select {
+            width: 100%;
+            padding: 0.5rem 0.8rem;
+            background: #0f172a;
+            border: 1px solid #475569;
+            border-radius: 8px;
+            color: #e2e8f0;
+            font-size: 0.9rem;
+        }
+
+        /* Feeds */
+        .topic {
+            background: #0f172a;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border: 1px solid #334155;
+        }
+        .topic-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.8rem;
+        }
+        .topic-header input {
+            background: transparent;
+            border: none;
+            color: #f8fafc;
+            font-size: 1rem;
+            font-weight: 600;
+            width: 70%;
+        }
+        .topic-header input:focus { outline: none; border-bottom: 1px solid #3b82f6; }
+        .btn-remove-topic {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 0.3rem 0.6rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.75rem;
+        }
+        .feed-list { list-style: none; }
+        .feed-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .feed-item input {
+            flex: 1;
+            padding: 0.4rem 0.8rem;
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 6px;
+            color: #e2e8f0;
+            font-size: 0.85rem;
+        }
+        .feed-item input:focus { outline: none; border-color: #3b82f6; }
+        .btn-remove-feed {
+            background: none;
+            border: none;
+            color: #ef4444;
+            cursor: pointer;
+            font-size: 1.2rem;
+            padding: 0 0.3rem;
+        }
+        .btn-add-feed {
+            background: none;
+            border: 1px dashed #475569;
+            color: #94a3b8;
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            width: 100%;
+            margin-top: 0.3rem;
+        }
+        .btn-add-feed:hover { border-color: #3b82f6; color: #3b82f6; }
+
+        .btn-add-topic {
+            width: 100%;
+            padding: 0.8rem;
+            background: none;
+            border: 2px dashed #334155;
+            color: #94a3b8;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+        .btn-add-topic:hover { border-color: #3b82f6; color: #3b82f6; }
+
+        /* Save */
+        .actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+        .btn-save {
+            flex: 1;
+            padding: 0.8rem;
+            background: #10b981;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+        .btn-save:hover { background: #059669; }
+        .btn-save:disabled { background: #475569; cursor: not-allowed; }
+        .btn-trigger {
+            padding: 0.8rem 1.5rem;
+            background: #8b5cf6;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        .btn-trigger:hover { background: #7c3aed; }
+
+        /* Status */
+        .status {
+            text-align: center;
+            padding: 0.6rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            display: none;
+        }
+        .status.success { display: block; background: #065f46; color: #6ee7b7; }
+        .status.error { display: block; background: #7f1d1d; color: #fca5a5; }
+        .status.loading { display: block; background: #1e3a5f; color: #93c5fd; }
+
+        @media (max-width: 600px) {
+            body { padding: 1rem; }
+            .settings-grid { grid-template-columns: 1fr; }
+            .auth-row { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>☕ Morning Digest</h1>
+        <p class="subtitle">Customize your daily news digest</p>
+
+        <!-- Auth -->
+        <div class="auth-section">
+            <div class="auth-row">
+                <div>
+                    <label>GitHub Personal Access Token</label>
+                    <input type="password" id="github-token" placeholder="ghp_xxxxxxxxxxxx">
+                </div>
+                <button class="btn-connect" onclick="loadConfig()">Connect</button>
+            </div>
+            <p style="font-size: 0.75rem; color: #64748b; margin-top: 0.5rem;">
+                Token perlu scope <code>repo</code>. <a href="https://github.com/settings/tokens/new?scopes=repo&description=morning-digest-admin" target="_blank" style="color: #3b82f6;">Create token →</a>
+            </p>
+        </div>
+
+        <!-- Settings -->
+        <div class="card" id="settings-card" style="display:none;">
+            <h2>⚙️ Settings</h2>
+            <div class="settings-grid">
+                <div class="setting-item">
+                    <label>Digest Title</label>
+                    <input type="text" id="setting-title">
+                </div>
+                <div class="setting-item">
+                    <label>Author</label>
+                    <input type="text" id="setting-author">
+                </div>
+                <div class="setting-item">
+                    <label>Articles per Topic</label>
+                    <input type="number" id="setting-articles" min="1" max="20">
+                </div>
+                <div class="setting-item">
+                    <label>Keep Days</label>
+                    <input type="number" id="setting-keepdays" min="1" max="30">
+                </div>
+                <div class="setting-item">
+                    <label>Schedule (MYT)</label>
+                    <input type="time" id="setting-schedule">
+                </div>
+            </div>
+        </div>
+
+        <!-- Feeds -->
+        <div class="card" id="feeds-card" style="display:none;">
+            <h2>📡 RSS Feeds</h2>
+            <div id="feeds-container"></div>
+            <button class="btn-add-topic" onclick="addTopic()">+ Add Topic</button>
+        </div>
+
+        <!-- Actions -->
+        <div class="actions" id="actions" style="display:none;">
+            <button class="btn-save" id="btn-save" onclick="saveConfig()">💾 Save Config</button>
+            <button class="btn-trigger" onclick="triggerWorkflow()">▶ Run Now</button>
+        </div>
+
+        <div class="status" id="status"></div>
+    </div>
+
+    <script>
+        const REPO = 'asrulmunir/morning-digest';
+        const CONFIG_PATH = 'config.json';
+        let configSha = null;
+
+        function getToken() {
+            return document.getElementById('github-token').value.trim();
+        }
+
+        function setStatus(msg, type) {
+            const el = document.getElementById('status');
+            el.className = 'status ' + type;
+            el.textContent = msg;
+            if (type === 'success') setTimeout(() => el.style.display = 'none', 3000);
+        }
+
+        async function ghAPI(endpoint, options = {}) {
+            const res = await fetch(`https://api.github.com/repos/${REPO}/${endpoint}`, {
+                headers: {
+                    'Authorization': `token ${getToken()}`,
+                    'Accept': 'application/vnd.github.v3+json',
+                    ...options.headers
+                },
+                ...options
+            });
+            if (!res.ok) throw new Error(`GitHub API error: ${res.status}`);
+            return res.json();
+        }
+
+        async function loadConfig() {
+            if (!getToken()) { setStatus('Masukkan token dulu', 'error'); return; }
+            setStatus('Loading config...', 'loading');
+            try {
+                const data = await ghAPI(`contents/${CONFIG_PATH}`);
+                configSha = data.sha;
+                const config = JSON.parse(atob(data.content));
+                renderConfig(config);
+                document.getElementById('settings-card').style.display = '';
+                document.getElementById('feeds-card').style.display = '';
+                document.getElementById('actions').style.display = '';
+                setStatus('Connected!', 'success');
+            } catch (e) {
+                setStatus('Error: ' + e.message, 'error');
+            }
+        }
+
+        function renderConfig(config) {
+            document.getElementById('setting-title').value = config.title || '';
+            document.getElementById('setting-author').value = config.author || '';
+            document.getElementById('setting-articles').value = config.articles_per_topic || 5;
+            document.getElementById('setting-keepdays').value = config.keep_days || 7;
+            document.getElementById('setting-schedule').value = config.schedule || '03:00';
+            renderFeeds(config.feeds || {});
+        }
+
+        function renderFeeds(feeds) {
+            const container = document.getElementById('feeds-container');
+            container.innerHTML = '';
+            for (const [topic, urls] of Object.entries(feeds)) {
+                container.appendChild(createTopicElement(topic, urls));
+            }
+        }
+
+        function createTopicElement(topic, urls) {
+            const div = document.createElement('div');
+            div.className = 'topic';
+            div.innerHTML = `
+                <div class="topic-header">
+                    <input type="text" value="${topic}" class="topic-name">
+                    <button class="btn-remove-topic" onclick="this.closest('.topic').remove()">Remove</button>
+                </div>
+                <ul class="feed-list">
+                    ${urls.map(url => `
+                        <li class="feed-item">
+                            <input type="url" value="${url}" placeholder="https://example.com/feed/">
+                            <button class="btn-remove-feed" onclick="this.closest('.feed-item').remove()">×</button>
+                        </li>
+                    `).join('')}
+                </ul>
+                <button class="btn-add-feed" onclick="addFeed(this)">+ Add Feed URL</button>
+            `;
+            return div;
+        }
+
+        function addFeed(btn) {
+            const li = document.createElement('li');
+            li.className = 'feed-item';
+            li.innerHTML = `
+                <input type="url" value="" placeholder="https://example.com/feed/">
+                <button class="btn-remove-feed" onclick="this.closest('.feed-item').remove()">×</button>
+            `;
+            btn.previousElementSibling.appendChild(li);
+        }
+
+        function addTopic() {
+            const container = document.getElementById('feeds-container');
+            container.appendChild(createTopicElement('New Topic', ['']));
+        }
+
+        function buildConfig() {
+            const feeds = {};
+            document.querySelectorAll('.topic').forEach(topicEl => {
+                const name = topicEl.querySelector('.topic-name').value.trim();
+                if (!name) return;
+                const urls = [];
+                topicEl.querySelectorAll('.feed-item input').forEach(input => {
+                    const url = input.value.trim();
+                    if (url) urls.push(url);
+                });
+                if (urls.length) feeds[name] = urls;
+            });
+
+            return {
+                title: document.getElementById('setting-title').value.trim(),
+                author: document.getElementById('setting-author').value.trim(),
+                articles_per_topic: parseInt(document.getElementById('setting-articles').value) || 5,
+                keep_days: parseInt(document.getElementById('setting-keepdays').value) || 7,
+                schedule: document.getElementById('setting-schedule').value || '03:00',
+                feeds: feeds
+            };
+        }
+
+        async function saveConfig() {
+            const config = buildConfig();
+            const content = btoa(unescape(encodeURIComponent(JSON.stringify(config, null, 2) + '\n')));
+
+            setStatus('Saving...', 'loading');
+            try {
+                const res = await ghAPI(`contents/${CONFIG_PATH}`, {
+                    method: 'PUT',
+                    body: JSON.stringify({
+                        message: 'Update config via web UI',
+                        content: content,
+                        sha: configSha
+                    })
+                });
+                configSha = res.content.sha;
+                setStatus('Saved!', 'success');
+            } catch (e) {
+                setStatus('Save failed: ' + e.message, 'error');
+            }
+        }
+
+        async function triggerWorkflow() {
+            setStatus('Triggering workflow...', 'loading');
+            try {
+                await fetch(`https://api.github.com/repos/${REPO}/actions/workflows/update-digest.yml/dispatches`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `token ${getToken()}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    },
+                    body: JSON.stringify({ ref: 'main' })
+                });
+                setStatus('Workflow triggered! Digest akan siap dalam ~1 minit.', 'success');
+            } catch (e) {
+                setStatus('Trigger failed: ' + e.message, 'error');
+            }
+        }
+
+        // Auto-load if token in localStorage
+        window.addEventListener('load', () => {
+            const saved = localStorage.getItem('md-token');
+            if (saved) {
+                document.getElementById('github-token').value = saved;
+                loadConfig();
+            }
+        });
+
+        // Save token to localStorage on connect
+        document.getElementById('github-token').addEventListener('change', (e) => {
+            localStorage.setItem('md-token', e.target.value);
+        });
+    </script>
+</body>
+</html>

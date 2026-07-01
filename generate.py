@@ -3,33 +3,21 @@ from datetime import date, datetime
 import os
 import html
 import re
+import json
 import ebooklib
 from ebooklib import epub
 import time
 import trafilatura
 
-# === KONFIGURASI ===
-FEEDS = {
-    "Teknologi": [
-        "https://www.theverge.com/rss/index.xml",
-        "https://bgr.com/feed/",
-        "https://www.macrumors.com/macrumors.xml"
-    ],
-    "AI & ML": [
-        "https://www.artificialintelligence-news.com/feed/"
-    ],
-    "Isu Semasa": [
-        "https://www.hmetro.com.my/feed/",
-        "https://www.nst.com.my/news/nation",
-        "https://www.saharonline.my/feed/"
-    ],
-    "Kopi": [
-        "https://www.perfectdailygrind.com/feed/"
-    ]
-}
+# === LOAD CONFIG ===
+with open('config.json', 'r') as f:
+    CONFIG = json.load(f)
 
-# Berapa artikel per topik
-ARTICLES_PER_TOPIC = 5
+FEEDS = CONFIG['feeds']
+ARTICLES_PER_TOPIC = CONFIG.get('articles_per_topic', 5)
+KEEP_DAYS = CONFIG.get('keep_days', 7)
+BOOK_TITLE = CONFIG.get('title', 'Daily Digest')
+BOOK_AUTHOR = CONFIG.get('author', 'Vibe Coder')
 
 
 def fetch_rss(url):
@@ -76,9 +64,9 @@ def build_epub(items_by_topic):
     """Build EPUB dengan full article content dan proper TOC."""
     book = epub.EpubBook()
     book.set_identifier(f"digest-{date.today().isoformat()}")
-    book.set_title(f"Daily Digest - {date.today().strftime('%d/%m/%Y')}")
+    book.set_title(f"{BOOK_TITLE} - {date.today().strftime('%d/%m/%Y')}")
     book.set_language("en")
-    book.add_author("Vibe Coder")
+    book.add_author(BOOK_AUTHOR)
 
     css_content = """
     body { font-family: serif; line-height: 1.6; margin: 1em; }
@@ -102,10 +90,10 @@ def build_epub(items_by_topic):
     cover = epub.EpubHtml(title='Cover', file_name='cover.xhtml', lang='en')
     cover.content = f"""
     <div style="text-align: center; padding-top: 30%;">
-        <h1>Daily Digest</h1>
+        <h1>{BOOK_TITLE}</h1>
         <h2>{date.today().strftime('%d %B %Y')}</h2>
         <p style="color: #666; margin-top: 2em;">Kompilasi berita harian</p>
-        <p style="color: #999; font-size: 0.8em;">Teknologi · AI · Isu Semasa · Kopi</p>
+        <p style="color: #999; font-size: 0.8em;">{' · '.join(FEEDS.keys())}</p>
     </div>
     """
     cover.add_item(style)
@@ -203,46 +191,6 @@ def update_index(new_entry):
 """
 
 
-def update_opds_catalog(epub_name, today):
-    """Generate OPDS catalog (Atom XML) supaya e-reader boleh detect."""
-    BASE_URL = "https://asrulmunir.github.io/morning-digest"
-
-    entries = []
-
-    if os.path.exists("catalog.xml"):
-        with open("catalog.xml", "r") as f:
-            content = f.read()
-        entries = re.findall(r'<entry>.*?</entry>', content, re.DOTALL)
-
-    updated = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
-    new_entry = f"""<entry>
-    <title>Daily Digest - {today.strftime('%d %B %Y')}</title>
-    <id>urn:uuid:digest-{today.isoformat()}</id>
-    <updated>{updated}</updated>
-    <author><name>Vibe Coder</name></author>
-    <summary>Kompilasi berita harian: Teknologi, AI, Isu Semasa, Kopi</summary>
-    <link rel="http://opds-spec.org/acquisition" href="{BASE_URL}/{epub_name}" type="application/epub+zip"/>
-  </entry>"""
-
-    entries.insert(0, new_entry)
-    entries_xml = "\n  ".join(entries)
-
-    catalog = f"""<?xml version="1.0" encoding="UTF-8"?>
-<feed xmlns="http://www.w3.org/2005/Atom"
-      xmlns:dc="http://purl.org/dc/terms/"
-      xmlns:opds="http://opds-spec.org/2010/catalog">
-  <id>urn:uuid:morning-digest-catalog</id>
-  <title>Morning Digest</title>
-  <subtitle>Daily news digest dalam format EPUB</subtitle>
-  <updated>{updated}</updated>
-  <author><name>Vibe Coder</name></author>
-  <link rel="self" href="{BASE_URL}/catalog.xml" type="application/atom+xml;profile=opds-catalog;kind=acquisition"/>
-  <link rel="start" href="{BASE_URL}/catalog.xml" type="application/atom+xml;profile=opds-catalog;kind=acquisition"/>
-  {entries_xml}
-</feed>
-"""
-    return catalog
-
 
 if __name__ == "__main__":
     today = date.today()
@@ -279,14 +227,9 @@ if __name__ == "__main__":
     with open("index.html", "w") as f:
         f.write(update_index(new_entry))
 
-    # 4. Update OPDS Catalog
-    print("Updating OPDS catalog...")
-    with open("catalog.xml", "w") as f:
-        f.write(update_opds_catalog(epub_name, today))
-
-    # 5. Cleanup — delete epubs older than 7 days
-    print("Cleaning up old digests...")
-    cutoff = today - __import__('datetime').timedelta(days=7)
+    # 4. Cleanup — delete epubs older than KEEP_DAYS, rebuild index + catalog
+    print(f"Cleaning up old digests (keeping {KEEP_DAYS} days)...")
+    cutoff = today - __import__('datetime').timedelta(days=KEEP_DAYS)
     for f in os.listdir('.'):
         if f.startswith('Digest_') and f.endswith('.epub'):
             try:
@@ -328,11 +271,11 @@ if __name__ == "__main__":
     for f in existing_epubs:
         file_date = date.fromisoformat(f.replace('Digest_', '').replace('.epub', ''))
         opds_entries.append(f"""<entry>
-    <title>Daily Digest - {file_date.strftime('%d %B %Y')}</title>
+    <title>{BOOK_TITLE} - {file_date.strftime('%d %B %Y')}</title>
     <id>urn:uuid:digest-{file_date.isoformat()}</id>
     <updated>{updated}</updated>
-    <author><name>Vibe Coder</name></author>
-    <summary>Kompilasi berita harian: Teknologi, AI, Isu Semasa, Kopi</summary>
+    <author><name>{BOOK_AUTHOR}</name></author>
+    <summary>Kompilasi berita harian: {', '.join(FEEDS.keys())}</summary>
     <link rel="http://opds-spec.org/acquisition" href="{BASE_URL}/{f}" type="application/epub+zip"/>
   </entry>""")
 
@@ -342,10 +285,10 @@ if __name__ == "__main__":
       xmlns:dc="http://purl.org/dc/terms/"
       xmlns:opds="http://opds-spec.org/2010/catalog">
   <id>urn:uuid:morning-digest-catalog</id>
-  <title>Morning Digest</title>
+  <title>{BOOK_TITLE}</title>
   <subtitle>Daily news digest dalam format EPUB</subtitle>
   <updated>{updated}</updated>
-  <author><name>Vibe Coder</name></author>
+  <author><name>{BOOK_AUTHOR}</name></author>
   <link rel="self" href="{BASE_URL}/catalog.xml" type="application/atom+xml;profile=opds-catalog;kind=acquisition"/>
   <link rel="start" href="{BASE_URL}/catalog.xml" type="application/atom+xml;profile=opds-catalog;kind=acquisition"/>
   {chr(10).join(opds_entries)}
