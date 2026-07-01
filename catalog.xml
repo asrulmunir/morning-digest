@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom"
+      xmlns:opds="http://opds-spec.org/2010/catalog">
+  <id>urn:uuid:morning-digest-catalog</id>
+  <title>Morning Digest</title>
+  <subtitle>Daily news digest dalam format EPUB</subtitle>
+  <updated>2026-07-01T11:25:04Z</updated>
+  <author><name>Vibe Coder</name></author>
+  <link rel="self" href="catalog.xml" type="application/atom+xml;profile=opds-catalog;kind=acquisition"/>
+  <link rel="start" href="catalog.xml" type="application/atom+xml;profile=opds-catalog;kind=acquisition"/>
+  <entry>
+    <title>Daily Digest - 01 July 2026</title>
+    <id>urn:uuid:digest-2026-07-01</id>
+    <updated>2026-07-01T11:25:04Z</updated>
+    <author><name>Vibe Coder</name></author>
+    <summary>Kompilasi berita harian: Teknologi, AI, Isu Semasa, Kopi</summary>
+    <link rel="http://opds-spec.org/acquisition" href="Digest_2026-07-01.epub" type="application/epub+zip"/>
+  </entry>
+</feed>
