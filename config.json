@@ -11,7 +11,9 @@
       "https://www.macrumors.com/macrumors.xml"
     ],
     "AI & ML": [
-      "https://www.artificialintelligence-news.com/feed/"
+      "https://www.artificialintelligence-news.com/feed/",
+      "https://aiweekly.co/issues.rss",
+      "https://theaiinsider.tech/feed/"
     ],
     "Isu Semasa": [
       "http://premium.sinarharian.com.my/rssFeed/14",
@@ -20,7 +22,9 @@
       "https://www.utusan.com.my/feed/"
     ],
     "Kopi": [
-      "https://www.perfectdailygrind.com/feed/"
+      "https://www.perfectdailygrind.com/feed/",
+      "http://sprudge.com/feed",
+      "http://www.coffeereview.com/feed/"
     ]
   }
 }
