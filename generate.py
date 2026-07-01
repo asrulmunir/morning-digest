@@ -73,7 +73,7 @@ def get_rss_content(entry):
 
 
 def build_epub(items_by_topic):
-    """Build EPUB dengan full article content."""
+    """Build EPUB dengan full article content dan proper TOC."""
     book = epub.EpubBook()
     book.set_identifier(f"digest-{date.today().isoformat()}")
     book.set_title(f"Daily Digest - {date.today().strftime('%d/%m/%Y')}")
@@ -83,13 +83,12 @@ def build_epub(items_by_topic):
     css_content = """
     body { font-family: serif; line-height: 1.6; margin: 1em; }
     h1 { text-align: center; border-bottom: 2px solid #333; padding-bottom: 0.5em; }
-    h2 { color: #2c3e50; border-bottom: 1px solid #ddd; padding-bottom: 0.3em; margin-top: 1.5em; }
-    .article { margin-bottom: 2em; page-break-after: always; }
-    .article-title { font-size: 1.2em; font-weight: bold; margin-bottom: 0.3em; }
+    h2 { color: #2c3e50; margin-top: 1.5em; }
     .article-source { font-style: italic; color: #7f8c8d; font-size: 0.85em; margin-bottom: 1em; }
     .article-content { text-align: justify; }
     .article-content p { margin-bottom: 0.8em; }
     .no-content { color: #999; font-style: italic; }
+    hr { border: none; border-top: 1px solid #ccc; margin: 2em 0; }
     """
     style = epub.EpubItem(
         uid="style",
@@ -99,52 +98,84 @@ def build_epub(items_by_topic):
     )
     book.add_item(style)
 
-    nav = epub.EpubNav()
-    book.add_item(nav)
+    # Cover page
+    cover = epub.EpubHtml(title='Cover', file_name='cover.xhtml', lang='en')
+    cover.content = f"""
+    <div style="text-align: center; padding-top: 30%;">
+        <h1>Daily Digest</h1>
+        <h2>{date.today().strftime('%d %B %Y')}</h2>
+        <p style="color: #666; margin-top: 2em;">Kompilasi berita harian</p>
+        <p style="color: #999; font-size: 0.8em;">Teknologi · AI · Isu Semasa · Kopi</p>
+    </div>
+    """
+    cover.add_item(style)
+    book.add_item(cover)
 
-    chapters = []
+    all_chapters = []
+    toc = []
+    chapter_idx = 0
+
     for topic, articles in items_by_topic.items():
-        ch = epub.EpubHtml(
+        # Topic intro page
+        topic_ch = epub.EpubHtml(
             title=topic,
-            file_name=f"{topic.lower().replace(' ', '_').replace('&', 'and')}.xhtml",
+            file_name=f"topic_{chapter_idx:02d}.xhtml",
             lang='en'
         )
+        topic_ch.content = f'<h1>{html.escape(topic)}</h1><p>{len(articles[:ARTICLES_PER_TOPIC])} artikel</p>'
+        topic_ch.add_item(style)
+        book.add_item(topic_ch)
+        all_chapters.append(topic_ch)
 
-        chapter_html = f'<h1>{html.escape(topic)}</h1>\n'
-
-        for art in articles[:ARTICLES_PER_TOPIC]:
-            title = html.escape(art.get('title', 'Untitled'))
+        # Individual article chapters
+        article_chapters = []
+        for i, art in enumerate(articles[:ARTICLES_PER_TOPIC]):
+            title = art.get('title', 'Untitled')
+            title_safe = html.escape(title)
             link = art.get('link', '')
             source = art.get('feed_title', '')
 
-            # Cuba fetch full content dari web
             print(f"  Fetching: {title[:60]}...")
             content = fetch_article_content(link)
 
-            # Fallback ke RSS content kalau scrape gagal
             if not content:
                 content = get_rss_content(art)
-
-            # Kalau masih takde content
             if not content:
                 content = '<p class="no-content">Content tidak tersedia.</p>'
 
-            chapter_html += f"""
-            <div class="article">
-                <h2 class="article-title">{title}</h2>
-                <p class="article-source">{html.escape(source)}</p>
-                <div class="article-content">
-                    {content}
-                </div>
+            art_ch = epub.EpubHtml(
+                title=title,
+                file_name=f"article_{chapter_idx:02d}_{i:02d}.xhtml",
+                lang='en'
+            )
+            art_ch.content = f"""
+            <h2>{title_safe}</h2>
+            <p class="article-source">{html.escape(source)}</p>
+            <div class="article-content">
+                {content}
             </div>
             """
+            art_ch.add_item(style)
+            book.add_item(art_ch)
+            all_chapters.append(art_ch)
+            article_chapters.append(art_ch)
 
-        ch.content = chapter_html
-        ch.add_item(style)
-        book.add_item(ch)
-        chapters.append(ch)
+        # TOC: topic as section with articles nested under it
+        toc.append(
+            (epub.Section(topic), article_chapters)
+        )
+        chapter_idx += 1
 
-    book.spine = ['nav'] + chapters
+    # Set TOC
+    book.toc = toc
+
+    # Add NCX and Nav
+    book.add_item(epub.EpubNcx())
+    book.add_item(epub.EpubNav())
+
+    # Spine: cover first, then all chapters
+    book.spine = ['nav', cover] + all_chapters
+
     return book
 
 
