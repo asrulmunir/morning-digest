@@ -3,18 +3,18 @@
       xmlns:dc="http://purl.org/dc/terms/"
       xmlns:opds="http://opds-spec.org/2010/catalog">
   <id>urn:uuid:morning-digest-catalog</id>
-  <title>Morning Digest</title>
+  <title>Daily Digest</title>
   <subtitle>Daily news digest dalam format EPUB</subtitle>
-  <updated>2026-07-01T11:53:51Z</updated>
-  <author><name>Vibe Coder</name></author>
+  <updated>2026-07-01T12:35:07Z</updated>
+  <author><name>Munir</name></author>
   <link rel="self" href="https://asrulmunir.github.io/morning-digest/catalog.xml" type="application/atom+xml;profile=opds-catalog;kind=acquisition"/>
   <link rel="start" href="https://asrulmunir.github.io/morning-digest/catalog.xml" type="application/atom+xml;profile=opds-catalog;kind=acquisition"/>
   <entry>
     <title>Daily Digest - 01 July 2026</title>
     <id>urn:uuid:digest-2026-07-01</id>
-    <updated>2026-07-01T11:53:51Z</updated>
-    <author><name>Vibe Coder</name></author>
-    <summary>Kompilasi berita harian: Teknologi, AI, Isu Semasa, Kopi</summary>
+    <updated>2026-07-01T12:35:07Z</updated>
+    <author><name>Munir</name></author>
+    <summary>Kompilasi berita harian: Teknologi, AI & ML, Isu Semasa, Kopi</summary>
     <link rel="http://opds-spec.org/acquisition" href="https://asrulmunir.github.io/morning-digest/Digest_2026-07-01.epub" type="application/epub+zip"/>
   </entry>
 </feed>
