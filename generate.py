@@ -284,5 +284,74 @@ if __name__ == "__main__":
     with open("catalog.xml", "w") as f:
         f.write(update_opds_catalog(epub_name, today))
 
+    # 5. Cleanup — delete epubs older than 7 days
+    print("Cleaning up old digests...")
+    cutoff = today - __import__('datetime').timedelta(days=7)
+    for f in os.listdir('.'):
+        if f.startswith('Digest_') and f.endswith('.epub'):
+            try:
+                file_date = date.fromisoformat(f.replace('Digest_', '').replace('.epub', ''))
+                if file_date < cutoff:
+                    os.remove(f)
+                    print(f"  Deleted: {f}")
+            except ValueError:
+                continue
+
+    # Rebuild index.html and catalog.xml to only include existing files
+    existing_epubs = sorted(
+        [f for f in os.listdir('.') if f.startswith('Digest_') and f.endswith('.epub')],
+        reverse=True
+    )
+
+    # Rebuild index
+    entries_html = "\n        ".join(
+        f"<li><a href='{f}'>{date.fromisoformat(f.replace('Digest_', '').replace('.epub', '')).strftime('%d %B %Y')}</a></li>"
+        for f in existing_epubs
+    )
+    with open("index.html", "w") as f:
+        f.write(f"""<!DOCTYPE html>
+<html>
+<head><title>Daily Digest</title></head>
+<body>
+    <h1>Latest Digests</h1>
+    <ul>
+        {entries_html}
+    </ul>
+</body>
+</html>
+""")
+
+    # Rebuild OPDS catalog
+    BASE_URL = "https://asrulmunir.github.io/morning-digest"
+    updated = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+    opds_entries = []
+    for f in existing_epubs:
+        file_date = date.fromisoformat(f.replace('Digest_', '').replace('.epub', ''))
+        opds_entries.append(f"""<entry>
+    <title>Daily Digest - {file_date.strftime('%d %B %Y')}</title>
+    <id>urn:uuid:digest-{file_date.isoformat()}</id>
+    <updated>{updated}</updated>
+    <author><name>Vibe Coder</name></author>
+    <summary>Kompilasi berita harian: Teknologi, AI, Isu Semasa, Kopi</summary>
+    <link rel="http://opds-spec.org/acquisition" href="{BASE_URL}/{f}" type="application/epub+zip"/>
+  </entry>""")
+
+    with open("catalog.xml", "w") as f:
+        f.write(f"""<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom"
+      xmlns:dc="http://purl.org/dc/terms/"
+      xmlns:opds="http://opds-spec.org/2010/catalog">
+  <id>urn:uuid:morning-digest-catalog</id>
+  <title>Morning Digest</title>
+  <subtitle>Daily news digest dalam format EPUB</subtitle>
+  <updated>{updated}</updated>
+  <author><name>Vibe Coder</name></author>
+  <link rel="self" href="{BASE_URL}/catalog.xml" type="application/atom+xml;profile=opds-catalog;kind=acquisition"/>
+  <link rel="start" href="{BASE_URL}/catalog.xml" type="application/atom+xml;profile=opds-catalog;kind=acquisition"/>
+  {chr(10).join(opds_entries)}
+</feed>
+""")
+
     print(f"Success! Created {epub_name}")
+    print(f"Keeping {len(existing_epubs)} digest(s) (last 7 days)")
     print(f"OPDS feed: catalog.xml")
