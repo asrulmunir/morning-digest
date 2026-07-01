@@ -120,7 +120,7 @@ All settings live in `config.json`:
 ## Supported E-Readers
 
 Tested with:
-- **XTЕINK X3** (built-in OPDS browser)
+- **XTЕINK X3/X4** (built-in OPDS browser)
 - **Boox** (NeoReader OPDS)
 - **KOReader** (any device)
 - **Moon+ Reader** (Android)
