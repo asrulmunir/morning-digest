@@ -115,6 +115,8 @@ def update_opds_catalog(epub_name, today):
     """Generate OPDS catalog (Atom XML) supaya e-reader boleh detect."""
     from datetime import datetime
 
+    BASE_URL = "https://asrulmunir.github.io/morning-digest"
+
     entries = []
 
     # Parse existing catalog entries
@@ -131,7 +133,7 @@ def update_opds_catalog(epub_name, today):
     <updated>{updated}</updated>
     <author><name>Vibe Coder</name></author>
     <summary>Kompilasi berita harian: Teknologi, AI, Isu Semasa, Kopi</summary>
-    <link rel="http://opds-spec.org/acquisition" href="{epub_name}" type="application/epub+zip"/>
+    <link rel="http://opds-spec.org/acquisition" href="{BASE_URL}/{epub_name}" type="application/epub+zip"/>
   </entry>"""
 
     entries.insert(0, new_entry)
@@ -139,14 +141,15 @@ def update_opds_catalog(epub_name, today):
 
     catalog = f"""<?xml version="1.0" encoding="UTF-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom"
+      xmlns:dc="http://purl.org/dc/terms/"
       xmlns:opds="http://opds-spec.org/2010/catalog">
   <id>urn:uuid:morning-digest-catalog</id>
   <title>Morning Digest</title>
   <subtitle>Daily news digest dalam format EPUB</subtitle>
   <updated>{updated}</updated>
   <author><name>Vibe Coder</name></author>
-  <link rel="self" href="catalog.xml" type="application/atom+xml;profile=opds-catalog;kind=acquisition"/>
-  <link rel="start" href="catalog.xml" type="application/atom+xml;profile=opds-catalog;kind=acquisition"/>
+  <link rel="self" href="{BASE_URL}/catalog.xml" type="application/atom+xml;profile=opds-catalog;kind=acquisition"/>
+  <link rel="start" href="{BASE_URL}/catalog.xml" type="application/atom+xml;profile=opds-catalog;kind=acquisition"/>
   {entries_xml}
 </feed>
 """
