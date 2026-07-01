@@ -197,15 +197,18 @@
         /* Status */
         .status {
             text-align: center;
-            padding: 0.6rem;
+            padding: 0.8rem 1rem;
             border-radius: 8px;
             margin-top: 1rem;
-            font-size: 0.9rem;
+            font-size: 0.95rem;
+            font-weight: 500;
             display: none;
+            animation: fadeIn 0.2s ease-in;
         }
-        .status.success { display: block; background: #065f46; color: #6ee7b7; }
-        .status.error { display: block; background: #7f1d1d; color: #fca5a5; }
-        .status.loading { display: block; background: #1e3a5f; color: #93c5fd; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+        .status.success { display: block; background: #065f46; color: #6ee7b7; border: 1px solid #10b981; }
+        .status.error { display: block; background: #7f1d1d; color: #fca5a5; border: 1px solid #ef4444; }
+        .status.loading { display: block; background: #1e3a5f; color: #93c5fd; border: 1px solid #3b82f6; }
 
         @media (max-width: 600px) {
             body { padding: 1rem; }
@@ -289,7 +292,8 @@
             const el = document.getElementById('status');
             el.className = 'status ' + type;
             el.textContent = msg;
-            if (type === 'success') setTimeout(() => el.style.display = 'none', 3000);
+            el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            if (type === 'success') setTimeout(() => { el.style.display = 'none'; }, 5000);
         }
 
         async function ghAPI(endpoint, options = {}) {
@@ -404,25 +408,34 @@
 
             setStatus('Saving...', 'loading');
             try {
-                const res = await ghAPI(`contents/${CONFIG_PATH}`, {
+                const res = await fetch(`https://api.github.com/repos/${REPO}/contents/${CONFIG_PATH}`, {
                     method: 'PUT',
+                    headers: {
+                        'Authorization': `token ${getToken()}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    },
                     body: JSON.stringify({
                         message: 'Update config via web UI',
                         content: content,
                         sha: configSha
                     })
                 });
-                configSha = res.content.sha;
-                setStatus('Saved!', 'success');
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.message || `HTTP ${res.status}`);
+                }
+                const data = await res.json();
+                configSha = data.content.sha;
+                setStatus('✅ Config saved!', 'success');
             } catch (e) {
-                setStatus('Save failed: ' + e.message, 'error');
+                setStatus('❌ Save failed: ' + e.message, 'error');
             }
         }
 
         async function triggerWorkflow() {
             setStatus('Triggering workflow...', 'loading');
             try {
-                await fetch(`https://api.github.com/repos/${REPO}/actions/workflows/update-digest.yml/dispatches`, {
+                const res = await fetch(`https://api.github.com/repos/${REPO}/actions/workflows/update-digest.yml/dispatches`, {
                     method: 'POST',
                     headers: {
                         'Authorization': `token ${getToken()}`,
@@ -430,9 +443,13 @@
                     },
                     body: JSON.stringify({ ref: 'main' })
                 });
-                setStatus('Workflow triggered! Digest akan siap dalam ~1 minit.', 'success');
+                if (!res.ok && res.status !== 204) {
+                    const err = await res.json().catch(() => ({}));
+                    throw new Error(err.message || `HTTP ${res.status}`);
+                }
+                setStatus('✅ Workflow triggered! Digest akan siap dalam ~1 minit.', 'success');
             } catch (e) {
-                setStatus('Trigger failed: ' + e.message, 'error');
+                setStatus('❌ Trigger failed: ' + e.message, 'error');
             }
         }
 
