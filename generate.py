@@ -144,7 +144,7 @@ def build_epub(items_by_topic):
                 content = '<p class="no-content">Content tidak tersedia.</p>'
 
             art_ch = epub.EpubHtml(
-                title=title,
+                title=f"[{topic}] {title}",
                 file_name=f"article_{chapter_idx:02d}_{i:02d}.xhtml",
                 lang='en'
             )
