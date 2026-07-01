@@ -216,7 +216,10 @@ def update_index(new_entry):
 
 
 if __name__ == "__main__":
-    today = date.today()
+    # Use UTC+8 (MYT) for date so filename matches local date
+    from datetime import timezone, timedelta
+    tz = timezone(timedelta(hours=8))
+    today = datetime.now(tz).date()
     items = {}
 
     # 1. Fetch RSS feeds
