@@ -43,6 +43,20 @@ def fetch_article_content(url):
             include_images=False,
             include_comments=False,
         )
+        if not result:
+            return None
+        # Validate — reject jika content nampak macam nav/menu junk
+        # Strip HTML tags untuk check
+        text_only = re.sub(r'<[^>]+>', '', result).strip()
+        # Reject jika terlalu pendek atau banyak newlines (menu items)
+        lines = [l.strip() for l in text_only.split('\n') if l.strip()]
+        avg_line_length = sum(len(l) for l in lines) / max(len(lines), 1)
+        # Menu/nav biasanya banyak baris pendek
+        if avg_line_length < 20 and len(lines) > 10:
+            return None
+        # Reject jika total content terlalu pendek (< 200 chars)
+        if len(text_only) < 200:
+            return None
         return result
     except Exception:
         return None
@@ -50,14 +64,28 @@ def fetch_article_content(url):
 
 def get_rss_content(entry):
     """Fallback: ambil content dari RSS feed itself (summary/content field)."""
+    content = ''
     # Cuba ambil full content dari feed dulu
     if 'content' in entry and entry['content']:
-        return entry['content'][0].get('value', '')
-    if 'summary_detail' in entry:
-        return entry['summary_detail'].get('value', '')
-    if 'summary' in entry:
-        return entry['summary']
-    return ''
+        content = entry['content'][0].get('value', '')
+    elif 'summary_detail' in entry:
+        content = entry['summary_detail'].get('value', '')
+    elif 'summary' in entry:
+        content = entry['summary']
+
+    if not content:
+        return ''
+
+    # Bersihkan — buang script/style tags tapi keep HTML structure
+    content = re.sub(r'<script[^>]*>.*?</script>', '', content, flags=re.DOTALL)
+    content = re.sub(r'<style[^>]*>.*?</style>', '', content, flags=re.DOTALL)
+
+    # Kalau content terlalu pendek, tak guna
+    text_only = re.sub(r'<[^>]+>', '', content).strip()
+    if len(text_only) < 50:
+        return ''
+
+    return content
 
 
 def build_epub(items_by_topic):
