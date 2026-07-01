@@ -1,0 +1,35 @@
+name: Daily Digest Generator
+
+on:
+  schedule:
+    # Run pukul 3:00 AM MYT (UTC+8) = 7:00 PM UTC hari sebelumnya
+    - cron: '0 19 * * *'
+  workflow_dispatch: # Boleh run manual dari GitHub UI
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Dependencies
+        run: |
+          pip install feedparser ebooklib
+
+      - name: Generate Digest
+        run: python generate.py
+
+      - name: Commit & Push
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add .
+          git commit -m "Update daily digest for $(date +%Y-%m-%d)" || exit 0
+          git push
