@@ -2,12 +2,18 @@ name: Daily Digest Generator
 
 on:
   schedule:
-    # Run pukul 3:00 AM MYT (UTC+8) = 7:00 PM UTC hari sebelumnya
+    # Run at 3:00 AM UTC+8 = 7:00 PM UTC
     - cron: '0 19 * * *'
-  workflow_dispatch: # Boleh run manual dari GitHub UI
+  workflow_dispatch:
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
 
 jobs:
   build:
@@ -23,8 +29,7 @@ jobs:
           python-version: '3.11'
 
       - name: Install Dependencies
-        run: |
-          pip install feedparser ebooklib trafilatura
+        run: pip install feedparser ebooklib trafilatura
 
       - name: Generate Digest
         run: python generate.py
@@ -36,3 +41,23 @@ jobs:
           git add .
           git commit -m "Update daily digest for $(date +%Y-%m-%d)" || exit 0
           git push
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+        with:
+          timeout: 600000
+          error_count: 3
