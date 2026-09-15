@@ -5,14 +5,22 @@
   <id>urn:uuid:morning-digest-catalog</id>
   <title>Daily Digest</title>
   <subtitle>Daily news digest in EPUB format</subtitle>
-  <updated>2026-09-14T22:09:26Z</updated>
+  <updated>2026-09-15T21:48:33Z</updated>
   <author><name>Munir</name></author>
   <link rel="self" href="https://asrulmunir.github.io/morning-digest/catalog.xml" type="application/atom+xml;profile=opds-catalog;kind=acquisition"/>
   <link rel="start" href="https://asrulmunir.github.io/morning-digest/catalog.xml" type="application/atom+xml;profile=opds-catalog;kind=acquisition"/>
   <entry>
+    <title>Daily Digest - 16 September 2026</title>
+    <id>urn:uuid:digest-2026-09-16</id>
+    <updated>2026-09-15T21:48:33Z</updated>
+    <author><name>Munir</name></author>
+    <summary>Daily news compilation: Teknologi, AI &amp; ML, Isu Semasa, Kopi</summary>
+    <link rel="http://opds-spec.org/acquisition" href="https://asrulmunir.github.io/morning-digest/Digest_2026-09-16.epub" type="application/epub+zip"/>
+  </entry>
+<entry>
     <title>Daily Digest - 15 September 2026</title>
     <id>urn:uuid:digest-2026-09-15</id>
-    <updated>2026-09-14T22:09:26Z</updated>
+    <updated>2026-09-15T21:48:33Z</updated>
     <author><name>Munir</name></author>
     <summary>Daily news compilation: Teknologi, AI &amp; ML, Isu Semasa, Kopi</summary>
     <link rel="http://opds-spec.org/acquisition" href="https://asrulmunir.github.io/morning-digest/Digest_2026-09-15.epub" type="application/epub+zip"/>
@@ -20,7 +28,7 @@
 <entry>
     <title>Daily Digest - 14 September 2026</title>
     <id>urn:uuid:digest-2026-09-14</id>
-    <updated>2026-09-14T22:09:26Z</updated>
+    <updated>2026-09-15T21:48:33Z</updated>
     <author><name>Munir</name></author>
     <summary>Daily news compilation: Teknologi, AI &amp; ML, Isu Semasa, Kopi</summary>
     <link rel="http://opds-spec.org/acquisition" href="https://asrulmunir.github.io/morning-digest/Digest_2026-09-14.epub" type="application/epub+zip"/>
@@ -28,7 +36,7 @@
 <entry>
     <title>Daily Digest - 13 September 2026</title>
     <id>urn:uuid:digest-2026-09-13</id>
-    <updated>2026-09-14T22:09:26Z</updated>
+    <updated>2026-09-15T21:48:33Z</updated>
     <author><name>Munir</name></author>
     <summary>Daily news compilation: Teknologi, AI &amp; ML, Isu Semasa, Kopi</summary>
     <link rel="http://opds-spec.org/acquisition" href="https://asrulmunir.github.io/morning-digest/Digest_2026-09-13.epub" type="application/epub+zip"/>
@@ -36,7 +44,7 @@
 <entry>
     <title>Daily Digest - 12 September 2026</title>
     <id>urn:uuid:digest-2026-09-12</id>
-    <updated>2026-09-14T22:09:26Z</updated>
+    <updated>2026-09-15T21:48:33Z</updated>
     <author><name>Munir</name></author>
     <summary>Daily news compilation: Teknologi, AI &amp; ML, Isu Semasa, Kopi</summary>
     <link rel="http://opds-spec.org/acquisition" href="https://asrulmunir.github.io/morning-digest/Digest_2026-09-12.epub" type="application/epub+zip"/>
@@ -44,7 +52,7 @@
 <entry>
     <title>Daily Digest - 11 September 2026</title>
     <id>urn:uuid:digest-2026-09-11</id>
-    <updated>2026-09-14T22:09:26Z</updated>
+    <updated>2026-09-15T21:48:33Z</updated>
     <author><name>Munir</name></author>
     <summary>Daily news compilation: Teknologi, AI &amp; ML, Isu Semasa, Kopi</summary>
     <link rel="http://opds-spec.org/acquisition" href="https://asrulmunir.github.io/morning-digest/Digest_2026-09-11.epub" type="application/epub+zip"/>
@@ -52,7 +60,7 @@
 <entry>
     <title>Daily Digest - 10 September 2026</title>
     <id>urn:uuid:digest-2026-09-10</id>
-    <updated>2026-09-14T22:09:26Z</updated>
+    <updated>2026-09-15T21:48:33Z</updated>
     <author><name>Munir</name></author>
     <summary>Daily news compilation: Teknologi, AI &amp; ML, Isu Semasa, Kopi</summary>
     <link rel="http://opds-spec.org/acquisition" href="https://asrulmunir.github.io/morning-digest/Digest_2026-09-10.epub" type="application/epub+zip"/>
@@ -60,17 +68,9 @@
 <entry>
     <title>Daily Digest - 09 September 2026</title>
     <id>urn:uuid:digest-2026-09-09</id>
-    <updated>2026-09-14T22:09:26Z</updated>
+    <updated>2026-09-15T21:48:33Z</updated>
     <author><name>Munir</name></author>
     <summary>Daily news compilation: Teknologi, AI &amp; ML, Isu Semasa, Kopi</summary>
     <link rel="http://opds-spec.org/acquisition" href="https://asrulmunir.github.io/morning-digest/Digest_2026-09-09.epub" type="application/epub+zip"/>
-  </entry>
-<entry>
-    <title>Daily Digest - 08 September 2026</title>
-    <id>urn:uuid:digest-2026-09-08</id>
-    <updated>2026-09-14T22:09:26Z</updated>
-    <author><name>Munir</name></author>
-    <summary>Daily news compilation: Teknologi, AI &amp; ML, Isu Semasa, Kopi</summary>
-    <link rel="http://opds-spec.org/acquisition" href="https://asrulmunir.github.io/morning-digest/Digest_2026-09-08.epub" type="application/epub+zip"/>
   </entry>
 </feed>
